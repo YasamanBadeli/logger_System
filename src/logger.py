@@ -1,36 +1,23 @@
-import threading
-from src.logger_output_adapter import LoggerOutputAdapter
-from src.console_adapter import ConsoleAdapter
+import os
+import sys
 
 class Logger:
     _instance = None
-    _lock = threading.Lock()
 
-    class LogLevel:
-        FATAL = 'FATAL'
-        ERROR = 'ERROR'
-        WARN = 'WARN'
-        INFO = 'INFO'
-        DEBUG = 'DEBUG'
-        TRACE = 'TRACE'
+    LOG_LEVELS = {"FATAL": 1, "ERROR": 2, "WARN": 3, "INFO": 4, "DEBUG": 5, "TRACE": 6}
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            with cls._lock:
-                if not cls._instance:
-                    cls._instance = super().__new__(cls)
+            cls._instance = super(Logger, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self):
-        self._log_level = self.LogLevel.INFO
-        self._adapter = ConsoleAdapter()
-
-    def set_log_level(self, log_level):
-        self._log_level = log_level
-
-    def set_adapter(self, adapter: LoggerOutputAdapter):
-        self._adapter = adapter
+    def __init__(self, level="INFO", adapter=None):
+        self.level = level
+        self.adapter = adapter
 
     def log(self, message, level):
-        if level == self._log_level:
-            self._adapter.write(message, level)
+        if self.LOG_LEVELS[level] <= self.LOG_LEVELS[self.level] and self.adapter:
+            self.adapter.write(f"[{level}] {message}")
+
+    def set_adapter(self, adapter: LoggerOutputAdapter):
+        self.adapter = adapter
